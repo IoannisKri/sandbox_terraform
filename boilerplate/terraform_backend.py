@@ -27,7 +27,8 @@ BUCKET=f"ioannis-sysops-soa-co2-{RANDOM}"
 SSM_PARAMETER_AMI_NAME='/aws/service/ami-amazon-linux-latest/amzn2-ami-kernel-5.10-hvm-x86_64-gp2'
 
 def get_ami():
-    client = boto3.client('ssm',region_name='us-east-1')
+    """We need to retrieve the AMI id which will be used to create an Ec2 instance"""
+    client = boto3.client('ssm',region_name=REGION)
     #parameter = ssm.get_parameters_by_path(Path='/aws/service/ami-amazon-linux-latest')
     paginator = client.get_paginator('get_parameters_by_path')
     response_iterator = paginator.paginate(
@@ -46,8 +47,7 @@ def create_aws_profile():
     f.write(f"aws_secret_access_key={os.environ['AWS_SECRET_ACCESS_KEY']}\r")
     f.write(f"region={REGION}\r")
     f.write("output=json")
-    f.close()   
-    
+    f.close()
 
 def create_bucket(bucket_name):
     """Create an S3 bucket in a specified region"""
@@ -61,6 +61,7 @@ def create_bucket(bucket_name):
 
 
 def create_key_pair(key_name):
+    """Create a key pair that will be used to ssh into instances"""
     client = boto3.client('ec2',region_name=REGION)
     try:
         response=client.create_key_pair(
@@ -80,11 +81,11 @@ def store_key(material):
         with open(f'{today}.ppk', 'w') as f:
             f.write(material["KeyMaterial"])    
         logging.info('PPK file successfully created.')        
-    
     else:
         logging.info('Key material is empty. Nothing to do.')    
 
 def create_instance_profile():
+    """The EC2 instance gets its permissions from the instance profile"""
     random_name=RANDOM
     log.info(f'Creating IAM Policy with random name: {random_name}')
     iam = boto3.client('iam')       
@@ -101,6 +102,7 @@ def create_instance_profile():
     response = iam.create_policy(PolicyName=random_name, PolicyDocument=json.dumps(terraform_policy))    
     log.info('Wait a little until IAM does its magic')
     policy_arn=response['Policy']['Arn']
+    #IAM needs some time to propagate permissions. Wait for some time to avoid permission pitfalls
     time.sleep(10)       
     log.info(response)
     assumed_policy={
@@ -128,16 +130,20 @@ def create_instance_profile():
 
 
 def create_terraform_ec2(sg_id,instance_profile,ami_id):
+    """Create an EC2 instance that will be used for terraform deployments"""
     logging.info('Creating EC2 instance.')
+    #Note that userdata is executed as ROOT user.
+    #We need to switch to the ec2-user folder otherwise the downloaded code will not be visible
     USERDATA_SCRIPT = '''
 #!/bin/bash
 # Install terraform
-sudo yum install -y yum-utils 
-sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
-sudo yum -y install terraform
-sudo yum -y install git
-sudo yum -y install jq
-aws s3 sync s3://{}/tf_modules/ .
+yum install -y yum-utils 
+yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+yum -y install terraform
+yum -y install git
+yum -y install jq
+cd home/ec2-user
+aws s3 sync s3://{0}/tf_modules/ .
 '''.format(BUCKET)
     iamInstanceProfile = {
         'Name': instance_profile
@@ -167,6 +173,7 @@ aws s3 sync s3://{}/tf_modules/ .
     return instance[0].id
 
 def create_sg():
+    """We need a security group that allows SSH access to the instance"""
     log.info('Creating security group.')
     ec2 = boto3.client('ec2',region_name=REGION)
     #Get default VPC identifier
@@ -174,7 +181,7 @@ def create_sg():
     vpc_id = response.get('Vpcs', [{}])[0].get('VpcId', '')
     
     try:
-        response = ec2.create_security_group(GroupName=RANDOM),
+        response = ec2.create_security_group(GroupName=RANDOM,
                                             Description='Allow me to connect via SSH',
                                             VpcId=vpc_id)
         security_group_id = response['GroupId']
@@ -199,11 +206,6 @@ def upload_file(file_name, bucket, object_name=None):
     # If S3 object_name was not specified, use file_name
     if object_name is None:
         object_name = os.path.basename(file_name)
-
-
-
-
-
     # Upload the file
     s3_client = boto3.client('s3')
     try:
@@ -213,8 +215,31 @@ def upload_file(file_name, bucket, object_name=None):
         return False
     return True
 
+def create_tf_backend_file(tf_project):
+    """Each project needs a backend file of its own"""
+    #read input file
+    backend = open("backend.tf", "rt")
+    #read file contents to string
+    data = backend.read()
+    #replace all occurrences of the required string
+    data = data.replace('<BUCKET_NAME>', BUCKET).replace('<KEY_NAME>',tf_project)
+    #close the input file
+    backend.close()
+    #open the input file in write mode
+    fin = open(f"../tf_modules/{tf_project}/backend.tf", "wt")
+    #overrite the input file with the resulting data
+    fin.write(data)
+    #close the file
+    fin.close()
+
+def get_tf_projects(directory):
+    
+    projects=next(os.walk(directory))[1]             
+    return projects
 
 def getListOfFiles(dirName):
+    """Return a list of all nested files under the given directory name"""
+
     # create a list of file and sub directories 
     # names in the given directory 
     listOfFile = os.listdir(dirName)
@@ -231,18 +256,43 @@ def getListOfFiles(dirName):
                 
     return allFiles
 
+
+def create_tf_backend_ddb():
+    """Create a dynamodb table to store terraform lock ids"""
+    client = boto3.client('dynamodb',region_name=REGION)
+
+    response=client.create_table(
+    AttributeDefinitions=[
+        {
+            'AttributeName': 'LockID',
+            'AttributeType': 'S'
+        },
+    ],
+        BillingMode='PAY_PER_REQUEST',
+
+    TableName='terraform-state',
+    KeySchema=[
+        {
+            'AttributeName': 'LockID',
+            'KeyType': 'HASH' 
+        },
+    ]) 
+    return response
+
 if __name__ == "__main__":
-    
+        
+    #    create_tf_backend_ddb()
     create_aws_profile()
     create_bucket(BUCKET)
     key_response=create_key_pair('ioannis')
     store_key(key_response)
+    for p in get_tf_projects('../tf_modules'):
+        create_tf_backend_file(p)
+    for f in getListOfFiles('../tf_modules'):
+        upload_file(f,BUCKET,f[3:])
     sg_id=create_sg()
     ami_id=get_ami()
     instance_profile=create_instance_profile()
-    all_files=getListOfFiles('../tf_modules')
-    for f in all_files:
-        upload_file(f,BUCKET,f[3:])
     instance_id=create_terraform_ec2(sg_id,instance_profile,ami_id)
     
     
