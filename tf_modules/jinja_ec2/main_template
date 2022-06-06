@@ -28,3 +28,8 @@ module "elb" {
   security_group=module.security.security_group
   vpc_id=var.vpc_id
 }
+
+module "alarm" {
+  source = "./alarm"
+
+}
