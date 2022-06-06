@@ -142,13 +142,11 @@ yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/has
 yum -y install terraform
 yum -y install git
 yum -y install jq
-pip3 install jinja2
 cd home/ec2-user
 mkdir terraform
-chmod 777 -R terraform
 cd terraform
 aws s3 sync s3://{0}/{1}/ .
-#find . -type d -exec chmod 777 {2} \;
+find . -type d -exec chmod 777 {2} \;
 '''.format(BUCKET,TF_MODULES_DIR,'{}')
     iamInstanceProfile = {
         'Name': instance_profile
