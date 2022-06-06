@@ -16,10 +16,10 @@ resource "null_resource" "put-ssm-parameter" {
 #  Create an SSM parameter that contains the logagent config which will be used in the EC2 images  
 #  Recreate only when the input config changes. The overwrite flag is also set in the command. 
   triggers = {
-    sha1 = "${sha1(file("cwagent_config.json"))}"
+    sha1 = "${sha1(file("cwagent.json"))}"
   }
   provisioner "local-exec" {
-    command = "aws ssm put-parameter --name \"cloudwatch_agent\" --type \"String\" --value file://cwagent_config.json --overwrite  --region us-east-1"
+    command = "aws ssm put-parameter --name \"cloudwatch_agent\" --type \"String\" --value file://cwagent.json --overwrite  --region us-east-1"
   }
 }
 

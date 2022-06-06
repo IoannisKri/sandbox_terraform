@@ -1,9 +1,8 @@
 terraform {
-  backend "s3" {
-    # Replace this with your bucket name!
-    bucket         = "ioannis-sysops-soa-co2"
-    key            = "global/ssm/terraform.tfstate"
-    region         = "us-east-1"
-    encrypt        = true
-  }
+ backend "s3" {
+   bucket         = "sysops-soa-co2-willy"
+   key            = "ssm"
+   region         = "us-east-1"
+   dynamodb_table = "terraform-state"
+ }
 }
