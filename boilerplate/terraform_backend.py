@@ -17,15 +17,16 @@ RANDOM=sys.argv[3]
 
 if len(sys.argv)==4:
     os.environ['REGION']='us-east-1'
-    print('Using default us-east-1 as region')
+    log.info('Using default us-east-1 as region')
 else:
     os.environ['REGION']=sys.argv[4]      
-    print(f'Using non-default {sys.argv[4]} as region')
+    log.info(f'Using non-default {sys.argv[4]} as region')
 
 REGION=os.environ['REGION']    
 BUCKET=f"sysops-soa-co2-{RANDOM}"
 SSM_PARAMETER_AMI_NAME='/aws/service/ami-amazon-linux-latest/amzn2-ami-kernel-5.10-hvm-x86_64-gp2'
 TF_MODULES_DIR='tf_modules'
+
 def get_ami():
     """We need to retrieve the AMI id which will be used to create an Ec2 instance"""
     client = boto3.client('ssm',region_name=REGION)
@@ -41,6 +42,7 @@ def get_ami():
                 return entry['Value']
 
 def create_aws_profile():
+    """The produced file can be used for aws configuration"""
     f=open("config", "w")
     f.write("[default]\r")
     f.write(f"aws_access_key_id={os.environ['AWS_ACCESS_KEY_ID']}\r")
@@ -50,14 +52,15 @@ def create_aws_profile():
     f.close()
 
 def create_bucket(bucket_name):
-    """Create an S3 bucket in a specified region"""
+    """Create an S3 bucket in a specified region.
+    The bucket will store terraform backends
+    """
     log.info('Creating terraform backend bucket')
     s3_client = boto3.client('s3', region_name=REGION)
     try:
-        
         s3_client.create_bucket(Bucket=bucket_name)
     except ClientError as e:
-        logging.error(e)
+        log.error(e)
 
 
 def create_key_pair(key_name):
@@ -71,23 +74,25 @@ def create_key_pair(key_name):
 ) 
         return response
     except Exception as e:
-        logging.error(e)
+        log.error(e)
 
    
 def store_key(material,name):
-    logging.info('Creating PPK file.')
+    """Create a key that will be used to SSH into instances"""
+    log.info('Creating PPK file.')
     if material is not None:
         with open(f'{name}.ppk', 'w') as f:
             f.write(material["KeyMaterial"])    
-        logging.info('PPK file successfully created.')        
+        log.info('PPK file successfully created.')        
     else:
-        logging.info('Key material is empty. Nothing to do.')    
+        log.info('Key material is empty. Nothing to do.')    
 
 def create_instance_profile():
     """The EC2 instance gets its permissions from the instance profile"""
     random_name=RANDOM
     log.info(f'Creating IAM Policy with random name: {random_name}')
-    iam = boto3.client('iam')       
+    iam = boto3.client('iam')  
+    #The role needs to be wide because terraform needs access to all APIs     
     terraform_policy = {
     "Version": "2012-10-17",
     "Statement": [
@@ -130,7 +135,7 @@ def create_instance_profile():
 
 def create_terraform_ec2(sg_id,instance_profile,ami_id):
     """Create an EC2 instance that will be used for terraform deployments"""
-    logging.info('Creating EC2 instance.')
+    log.info('Creating EC2 instance.')
     #Note that userdata is executed as ROOT user.
     #We need to switch to the ec2-user folder otherwise the downloaded code will not be visible
     #It's also helpful to make the folders writable so that terraform init can be executed and write files under the folder
@@ -145,10 +150,8 @@ yum -y install jq
 pip3 install jinja2
 cd home/ec2-user
 mkdir terraform
+aws s3 sync s3://{0}/{1}/ ./terraform
 chmod 777 -R terraform
-cd terraform
-aws s3 sync s3://{0}/{1}/ .
-#find . -type d -exec chmod 777 {2} \;
 '''.format(BUCKET,TF_MODULES_DIR,'{}')
     iamInstanceProfile = {
         'Name': instance_profile
@@ -216,35 +219,29 @@ def upload_file(file_name, bucket, object_name=None):
     try:
         response = s3_client.upload_file(file_name, bucket, object_name)
     except Exception as e:
-        logging.error(e)
+        log.error(e)
         return False
     return True
 
 def create_tf_backend_file(tf_project):
-    """Each project needs a backend file of its own"""
-    #read input file
+    """Each project needs a backend file of its own.
+    The backend.tf located in this folder gets populated properly and copied to all tf templates
+    """
     backend = open("backend.tf", "rt")
-    #read file contents to string
     data = backend.read()
-    #replace all occurrences of the required string
     data = data.replace('<BUCKET_NAME>', BUCKET).replace('<KEY_NAME>',tf_project)
-    #close the input file
     backend.close()
-    #open the input file in write mode
     fin = open(f"../{TF_MODULES_DIR}/{tf_project}/backend.tf", "wt")
-    #overrite the input file with the resulting data
     fin.write(data)
-    #close the file
     fin.close()
 
 def get_tf_projects(directory):
-    
+    """Get a list of folders that corresponds to the terraform templates"""
     projects=next(os.walk(directory))[1]             
     return projects
 
 def getListOfFiles(dirName):
     """Return a list of all nested files under the given directory name"""
-
     # create a list of file and sub directories 
     # names in the given directory 
     listOfFile = os.listdir(dirName)
