@@ -57,9 +57,29 @@ def create_bucket(bucket_name):
     """
     log.info('Creating terraform backend bucket')
     s3_client = boto3.client('s3', region_name=REGION)
+    kms_client= boto3.client('kms', region_name=REGION)
+    key=kms_client.describe_key(KeyId='alias/aws/s3')
     try:
         s3_client.create_bucket(Bucket=bucket_name)
-    except ClientError as e:
+        #Put bucket default encryption with aws default s3 key
+        s3_client.put_bucket_encryption(
+            Bucket=bucket_name,
+            ServerSideEncryptionConfiguration={
+            'Rules': [
+            {
+                'ApplyServerSideEncryptionByDefault': {
+                    'SSEAlgorithm': 'aws:kms',
+                    'KMSMasterKeyID': key['KeyMetadata']['Arn']
+                },
+                'BucketKeyEnabled': True
+            },
+        ]
+    })
+        #Enable bucket versioning to protect terraform state files    
+        s3 = boto3.resource('s3', region_name=REGION)
+        bucket_versioning = s3.BucketVersioning(bucket_name)
+        bucket_versioning.enable()
+    except Exception as e:
         log.error(e)
 
 
@@ -209,9 +229,11 @@ def create_sg():
         log.error(e)
 
 def upload_file(file_name, bucket, object_name=None):
-    """Upload a file to an S3 bucket"""
+    """Upload a file to an S3 bucket.
+    This function is used to upload all code files to an S3 Bucket.
+    The files are then downloaded by the EC2 instance on startup"""
+    
     log.info(f'Uploading {file_name} to s3')
-    # If S3 object_name was not specified, use file_name
     if object_name is None:
         object_name = os.path.basename(file_name)
     # Upload the file
@@ -276,7 +298,6 @@ def create_tf_backend_ddb():
     return response
 
 if __name__ == "__main__":
-        
     create_tf_backend_ddb()
     create_aws_profile()
     create_bucket(BUCKET)
@@ -291,5 +312,4 @@ if __name__ == "__main__":
     ami_id=get_ami()
     instance_profile=create_instance_profile()
     instance_id=create_terraform_ec2(sg_id,instance_profile,ami_id)
-    
-    
+

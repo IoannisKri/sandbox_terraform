@@ -31,5 +31,6 @@ module "elb" {
 
 module "alarm" {
   source = "./alarm"
+  enable_alarm = var.enable_alarm
 
 }
