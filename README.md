@@ -23,7 +23,7 @@ From within boilerplate folder, execute the following command:
 
 Now you have an EC2 instance with terraform installed and some bootstrapped templates ready to be deployed.
 
-![Alt text](images\1_sYfCr4Jlo_6nDmgclWjxVg.png?raw=true "Terraform Backend")
+![Alt text](images/1_sYfCr4Jlo_6nDmgclWjxVg.png?raw=true "Terraform Backend")
 
 
 ### Step 2
