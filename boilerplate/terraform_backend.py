@@ -167,7 +167,7 @@ yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/has
 yum -y install terraform
 yum -y install git
 yum -y install jq
-pip3 install jinja2
+pip3 install jinja2 boto3
 cd home/ec2-user
 mkdir terraform
 aws s3 sync s3://{0}/{1}/ ./terraform
@@ -232,7 +232,7 @@ def upload_file(file_name, bucket, object_name=None):
     """Upload a file to an S3 bucket.
     This function is used to upload all code files to an S3 Bucket.
     The files are then downloaded by the EC2 instance on startup"""
-    
+
     log.info(f'Uploading {file_name} to s3')
     if object_name is None:
         object_name = os.path.basename(file_name)

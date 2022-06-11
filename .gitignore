@@ -1,5 +1,5 @@
 # exclude everything
-boilerplate/*.
+boilerplate/*.ppk
 boilerplate/*.pem
 boilerplate/config
 tf_modules/*/backend.tf
