@@ -13,7 +13,7 @@ resource "random_id" "random" {
 }
 
 resource "null_resource" "put-ssm-parameter" {
-#  Create an SSM parameter that contains the logagent config which will be used in the EC2 images  
+#  Create an SSM parameter that contains the logagent config which will be used in the EC2 images (cwagent.json)
 #  Recreate only when the input config changes. The overwrite flag is also set in the command. 
   triggers = {
     sha1 = "${sha1(file("cwagent.json"))}"

@@ -1,1 +1,1 @@
-bucket_name = "ioannis-sysops-soa-co2-ssm-outputs"
+bucket_name = "sysops-soa-co2-ssm-outputs"
