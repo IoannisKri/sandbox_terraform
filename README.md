@@ -1,10 +1,4 @@
-# Prerequisites
-
-- putty / puttygen
-- python boto3 package
-- Visual Studio Code (or other editor)
-
-# Description
+## Description
 
 - This repository uses Terraform to deploy some infrastructure in AWS. The idea behind this, is to quickly deploy working examples in timeboxed sandbox accounts without having to repeat manual steps every time. The sample templates included, cover a small range of AWS tools as well as some useful Terraform examples that can be useful in real world scenarios.
 
@@ -12,7 +6,11 @@
 
 Read More about Terraform [here](https://www.terraform.io/).
 
-## Installation
+## Installation and Prerequisites
+
+- putty / puttygen
+- python boto3 package
+- Visual Studio Code (or other editor)
 
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install boto3 to your local machine.
 
