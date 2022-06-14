@@ -1,6 +1,8 @@
 ## Description
 
-- Deploy a simple EC2 instance exposing a web application
+- Deploy a simple EC2 instance with a proper security group and instance profile. The instance exposes a simple web page.
+- The instance is reachable via Internet. The predefined VPC infrastructure that comes with the sandbox account has been used.
+- The user is able to connect to the EC2 instance via SSH.
 
 ## Usage
 
