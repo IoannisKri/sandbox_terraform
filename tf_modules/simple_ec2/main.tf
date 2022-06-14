@@ -103,3 +103,12 @@ resource "aws_iam_role_policy_attachment" "AmazonS3FullAccess" {
   role       = aws_iam_role.role.name
   policy_arn = data.aws_iam_policy.AmazonS3FullAccess.arn
 }
+
+
+#Use outputs so that values can be shared between submodules
+output "instance_arn" {
+  value =  aws_instance.web.arn
+} 
+
+
+
