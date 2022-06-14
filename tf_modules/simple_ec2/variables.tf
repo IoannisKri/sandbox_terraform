@@ -1,5 +1,4 @@
-variable "instances" {
-  type = list(string)
+variable "instance" {
 }
 
 variable "key" {

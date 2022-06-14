@@ -27,6 +27,7 @@ module "elb" {
   aws_lb_target_group_arn = module.security.alb_target_group
   security_group=module.security.security_group
   vpc_id=var.vpc_id
+  name=var.key
 }
 
 module "alarm" {
