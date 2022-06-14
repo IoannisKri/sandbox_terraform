@@ -1,8 +1,8 @@
 ## Description
 
-This template uses jinja together with terraform to create a "fleet" of EC2 instances behind an application load balancer. 
-EC2 Logs can be sent to Cloudwatch via a Cloudwatch Agent and an alarm can be triggered based on these logs.
-ELB logs should be queryable via Athena.
+- This template uses jinja together with terraform to create a "fleet" of EC2 instances behind an application load balancer. 
+- EC2 Logs can be sent to Cloudwatch via a Cloudwatch Agent and an alarm can be triggered based on these logs.
+- ELB logs should be queryable via Athena.
 
 !Disclaimer: We are using an S3 bucket as a dummy code / artifact repository. The code of the application served by the EC2 instances is picked up from the S3 bucket.
 

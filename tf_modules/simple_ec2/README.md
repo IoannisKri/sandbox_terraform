@@ -4,6 +4,8 @@
 - The instance is reachable via Internet. The predefined VPC infrastructure that comes with the sandbox account has been used.
 - The user is able to connect to the EC2 instance via SSH.
 
+!Disclaimer: We are using an S3 bucket as a dummy code / artifact repository. The code of the application served by the EC2 instances is picked up from the S3 bucket.
+
 ## Usage
 
 From within the Terraform EC2 instance created previously, do the following:
