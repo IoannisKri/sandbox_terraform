@@ -1,4 +1,3 @@
-
 resource "aws_instance" "web" {
 #  Create some EC2 instances where we are allowed to connect via SSH.
   ami = "ami-0022f774911c1d690"
@@ -27,11 +26,13 @@ EOF
   }
 }
 
+#Each instance gets its own Elastic IP
 resource "aws_eip" "lb" {
   instance = aws_instance.web.id
   vpc      = true
 }
 
+#Each instance is assigned to the lb group upon creation
 resource "aws_lb_target_group_attachment" "test" {
   target_group_arn = var.alb_target_group
   target_id        = aws_eip.lb.private_ip

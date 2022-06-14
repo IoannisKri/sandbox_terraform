@@ -3,8 +3,9 @@ resource "aws_cloudwatch_log_group" "myapp" {
   #We choose to create it here so that retention can be imposed
   name = "/var/log/messages"
   retention_in_days = 7
+  #Using tags is always a good idea
   tags = {
-    Environment = "production"
+    Environment = "demo"
     Application = "myapp"
   }
 }

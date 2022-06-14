@@ -1,5 +1,4 @@
 variable "enable_alarm" {
-  
 }
 
 

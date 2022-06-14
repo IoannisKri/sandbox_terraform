@@ -1,4 +1,3 @@
-
 variable "aws_lb_target_group_arn" {
 }
 
