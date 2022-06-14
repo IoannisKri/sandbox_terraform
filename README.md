@@ -9,8 +9,8 @@ Read More about Terraform [here](https://www.terraform.io/).
 ## Installation and Prerequisites
 
 - putty / puttygen
-- python boto3 package
 - Visual Studio Code (or other editor)
+- python boto3 package
 
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install boto3 to your local machine.
 
