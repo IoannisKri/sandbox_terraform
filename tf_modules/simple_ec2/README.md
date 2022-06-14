@@ -20,6 +20,10 @@ Now terraform will create .terraform folder and it will be able to perform the d
 
 ### Step 2
 
+Validate the terraform configuration
+
+```terraform validate```
+
 Create the terraform plan with the resource that are about to be created
 
 ```terraform plan --var-file input.tfvars```
