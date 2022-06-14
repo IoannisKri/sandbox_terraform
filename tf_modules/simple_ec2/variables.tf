@@ -10,7 +10,7 @@ type        = string
 description = "The key name that will be used to connect to the instance"
 #We can validate the provided inputs to avoid mistakes
 validation {
-    condition     = length(var.image_id) > 2
-    error_message = "The key namee must be longer than 2 characters"
+    condition     = length(var.key) > 2
+    error_message = "The key name ${var.key} is not longer than 2 characters."
 }
 }
