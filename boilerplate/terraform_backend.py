@@ -299,7 +299,7 @@ def create_tf_backend_ddb():
 
 if __name__ == "__main__":
     create_tf_backend_ddb()
-    create_aws_profile()
+    #create_aws_profile()
     create_bucket(BUCKET)
     for k in [RANDOM ]:
         key_response=create_key_pair(k)
