@@ -12,7 +12,7 @@ resource "aws_instance" "web" {
   key_name = var.key
   user_data_replace_on_change = true
   vpc_security_group_ids = [aws_security_group.allow_ssh.id]
-  iam_instance_profile=aws_iam_instance_profile.ec2_ssm_profile.id
+  iam_instance_profile=aws_iam_instance_profile.ec2_simple_profile.id
   instance_type = "t3.micro"
  #No sudo is needed when using user data commands
   user_data = <<EOF
@@ -28,7 +28,7 @@ EOF
 #  The instances are tagged with SSM = TRUE because ssm will use this tag to select them and execute some commands
   tags = {
     SSM = "TRUE"
-    Name = each.value
+    Name = var.instance
   }
 }
 
@@ -108,7 +108,4 @@ resource "aws_iam_role_policy_attachment" "AmazonS3FullAccess" {
 #Use outputs so that values can be shared between submodules
 output "instance_arn" {
   value =  aws_instance.web.arn
-} 
-
-
-
+}
