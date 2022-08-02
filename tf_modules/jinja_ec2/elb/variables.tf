@@ -9,3 +9,7 @@ variable "vpc_id" {
 
 variable "name" {
 }
+
+variable "logs_prefix" {
+   default= "test-lb"
+}

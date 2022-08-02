@@ -24,7 +24,7 @@ pip install boto3
 
 From within boilerplate folder, execute the following command:
 
-```python3 terraform_backend.py ACCESS_KEY SECRET_ACCESS_KEY NAME```
+```python3 terraform_backend.py ACCESS_KEY SECRET_ACCESS_KEY NAME RANDOM_IDENTIFIER```
 
 Now you have an EC2 instance with terraform installed and some bootstrapped templates ready to be deployed.
 

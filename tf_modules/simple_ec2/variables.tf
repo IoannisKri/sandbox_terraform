@@ -3,7 +3,7 @@ variable "instance" {
 
 variable "key" {
 #We cand provide default values that will be used if the given input variables are not rovided
-default     = "willy"
+#default     = "willy"
 #We cand provide the variable type
 type        = string
 #A description helps understand the meaning of the variable

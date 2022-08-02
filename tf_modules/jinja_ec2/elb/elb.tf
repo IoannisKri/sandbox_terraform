@@ -12,6 +12,8 @@ resource "aws_s3_bucket" "elb_logs" {
     bucket = "sysops-soa-co2-elb-logs-${var.name}"
 }
 
+
+
 resource "aws_s3_bucket" "athena_logs" {
 #  Create a simple bucket to store Athena query result logs  
     bucket = "sysops-soa-co2-athena-logs-${var.name}"
@@ -22,6 +24,24 @@ resource "aws_s3_bucket_policy" "allow_access_from_another_account" {
   bucket = aws_s3_bucket.elb_logs.id
   policy = data.aws_iam_policy_document.allow_access.json
 }
+
+resource "aws_s3_bucket_lifecycle_configuration" "example" {
+  bucket = aws_s3_bucket.elb_logs.bucket
+  rule {
+    expiration {
+      days = 365
+    }
+
+    filter {
+      prefix = "${var.logs_prefix}/"
+    }
+   status = "Enabled"
+
+    id = "logs"
+  }
+
+}
+
 
 data "aws_iam_policy_document" "allow_access" {
   #Bucket policy needs to allow the current account to write files to bucket
@@ -49,7 +69,7 @@ resource "aws_lb" "front_end" {
   #Access logs are enabled
   access_logs {
     bucket  = aws_s3_bucket.elb_logs.bucket
-    prefix  = "test-lb"
+    prefix  = var.logs_prefix
     enabled = true
   }
 
