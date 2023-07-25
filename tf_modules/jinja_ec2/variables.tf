@@ -6,7 +6,8 @@ variable "key" {
 }
 
 
-variable "enable_alarm" {
+variable "user_data" {
+    default = ""
   
 }
 

@@ -9,7 +9,6 @@ resource "aws_security_group" "allow_tls" {
     to_port          = 443
     protocol         = "tcp"
     cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["0.0.0.0/0"]
   }
 #  We will be using port 22 to connect to the instance.
     ingress {
@@ -18,16 +17,14 @@ resource "aws_security_group" "allow_tls" {
     to_port          = 22
     protocol         = "tcp"
     cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["0.0.0.0/0"]
   }
 #  We will be using port 5000 to expose the app.
     ingress {
     description      = "5000 for all"
-    from_port        = 5000
-    to_port          = 5000
+    from_port        = 0
+    to_port          = 0
     protocol         = "tcp"
     cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["0.0.0.0/0"]
   }  
 
   egress {
@@ -35,7 +32,6 @@ resource "aws_security_group" "allow_tls" {
     to_port          = 0
     protocol         = "-1"
     cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
   }
 
   tags = {

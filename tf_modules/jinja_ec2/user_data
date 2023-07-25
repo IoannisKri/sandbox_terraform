@@ -1,0 +1,45 @@
+<<EOF
+#!/bin/bash
+cd home/ec2-user
+# download the binaries
+wget https://archive.apache.org/dist/kafka/2.2.0/kafka_2.12-2.2.0.tgz
+
+# unpack the tarball
+tar -xvf kafka_2.12-2.2.0.tgz
+
+# rename dir to kafka
+mv kafka_2.12-2.2.0 kafka
+
+# change dir into kafka
+cd kafka
+
+# install java
+yum install -y java
+
+# verify java version
+java -version
+
+# disable RAM swap
+swapoff -a
+
+# remove swap from fstab
+sed -i '/ swap / s/^/#/' /etc/fstab
+
+aws s3 cp  ${local.zookeper_s3_path} /etc/init.d/zookeeper
+# change file permission
+chmod +x /etc/init.d/zookeeper
+
+# change ownership to root
+chown root:root /etc/init.d/zookeeper
+
+# install init script
+chkconfig --add zookeeper
+
+# start the zookeeper service
+service zookeeper start
+
+# verify the service is up
+service zookeeper status
+
+aws s3 cp  ${local.zookeper_s3_path} /etc/init.d/kafka
+EOF
