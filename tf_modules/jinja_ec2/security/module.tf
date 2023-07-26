@@ -22,7 +22,7 @@ resource "aws_security_group" "allow_tls" {
     ingress {
     description      = "5000 for all"
     from_port        = 0
-    to_port          = 0
+    to_port          = 65535
     protocol         = "tcp"
     cidr_blocks      = ["0.0.0.0/0"]
   }  

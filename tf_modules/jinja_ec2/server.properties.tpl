@@ -1,6 +1,6 @@
 broker.id=${id}
 # change this to the hostname of each broker
-advertised.listeners=PLAINTEXT://${ip}:9092
+advertised.listeners=PLAINTEXT://kafka${id}:9092
 # The ability to delete topics
 delete.topic.enable=true
 # Where logs are stored
@@ -18,7 +18,7 @@ log.segment.bytes=1073741824
 # check to see if any data needs to be deleted
 log.retention.check.interval.ms=300000
 # location of all zookeeper instances and kafka directory
-zookeeper.connect=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181/kafka
+zookeeper.connect=zookeeper1:2181,zookeeper2:2181/kafka
 # timeout for connecting with zookeeeper
 zookeeper.connection.timeout.ms=6000
 # automatically create topics

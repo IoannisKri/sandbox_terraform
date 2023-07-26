@@ -1,64 +1,18 @@
 locals {
   user_data_initial= <<EOF
 #!/bin/bash
-cd home/ec2-user
-# download the binaries
-wget https://archive.apache.org/dist/kafka/2.2.0/kafka_2.12-2.2.0.tgz
-
-# unpack the tarball
-tar -xvf kafka_2.12-2.2.0.tgz
-
-# rename dir to kafka
-mv kafka_2.12-2.2.0 kafka
-
-# change dir into kafka
-cd kafka
-
-# install java
-yum install -y java
-
-# verify java version
-java -version
-
-# disable RAM swap
-swapoff -a
-
-# remove swap from fstab
-sed -i '/ swap / s/^/#/' /etc/fstab
-
-aws s3 cp  ${var.zookeper_s3_path} /etc/init.d/zookeeper
-# change file permission
-chmod +x /etc/init.d/zookeeper
-
-# change ownership to root
-chown root:root /etc/init.d/zookeeper
-
-# install init script
-chkconfig --add zookeeper
-
-# start the zookeeper service
-service zookeeper start
-
-# verify the service is up
-service zookeeper status
-
-EOF  
-
-
-
-
-
-
+rm /var/lib/cloud/instances/*/sem/config_scripts_user
+EOF
 }
 
 resource "aws_instance" "kafka" {
 #  Create some EC2 instances where we are allowed to connect via SSH.
   ami = "ami-0022f774911c1d690"
   key_name = var.key
-  user_data_replace_on_change = true
+  user_data_replace_on_change = false
   vpc_security_group_ids = [ var.security_group ]
   iam_instance_profile= var.instance_profile
-  instance_type = "t3.micro"
+  instance_type = "t2.medium"
 #  The SSM agent is preinstalled. Without it, SSM will not be able to execute the necessary actions.
   user_data = var.user_data == "" ? local.user_data_initial : var.user_data
 
@@ -99,5 +53,23 @@ resource "aws_s3_bucket_object" "server_properties" {
   bucket = var.source_code_bucket
   key = "server.properties-${var.id}"
   content = data.template_file.server_properties.rendered
+}
+
+data "template_file" "etc_hosts" {
+  template = "${file("${path.cwd}/etc_hosts.tpl")}"
+
+  vars = {
+    ip = aws_eip.lb.public_ip
+    id = var.id
+  }
+}
+
+
+resource "aws_s3_bucket_object" "etc_hosts" {
+  # Create an etc_hosts file per instance. These files are then concatenated into a single final etc_hosts file
+  etag   = filemd5("${path.cwd}/etc_hosts.tpl")
+  bucket = var.source_code_bucket
+  key = "etc-hosts-${var.id}"
+  content = data.template_file.etc_hosts.rendered
 }
 
